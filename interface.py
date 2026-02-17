@@ -3,6 +3,10 @@ from PIL import Image, ImageTk
 import os
 import json
 
+import requests
+import re
+import html
+
 ################ DATA ###############
 
 appdata_dir = os.getenv('APPDATA')    #les données sont sauvegardées dans le appdata
@@ -63,18 +67,35 @@ class FloatingTooltip:
             self.tooltip.destroy()
             self.tooltip = None
 
+def get_playlist_name(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0", #C'est juste le nom du header, c'est indépendant des navigateurs installés
+        "Range": "bytes=0-4096"
+    }
+
+    r = requests.get(url, headers=headers)
+    text = r.text
+
+    start = text.find("<title>")
+    end = text.find("</title>")
+
+    if start != -1 and end != -1:
+        title = text[start+7:end]
+        return html.unescape(title.split(" - ")[0])
+
+    return None
+
 def toggle(toggle_button):
     
     with open(data_path, 'r') as f:
         data = json.load(f)
 
-
     if toggle_button.config('relief')[-1] == 'sunken':
-        toggle_button.config(relief='raised')
+        toggle_button.config(relief='raised',background=couleur1)
         texte="                                                                                                                                                                            "
         new_state=0
     else:
-        toggle_button.config(relief='sunken')
+        toggle_button.config(relief='sunken',background=couleur2)
         texte="*Si votre enceinte est pairé avec votre ordinateur, elle se connectera automatiquement."
         new_state=1
 
@@ -90,49 +111,43 @@ def toggle(toggle_button):
 
 def page2 (lien):#mode,nom,mail,pathExosL,pathCours):
 
-
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+    
+    nom_playlist = data["nom_playlist"]
 
     Valider=tk.Button(grille,text="Valider",font=(Police,12),fg=couleur2,bg=couleur1,command = lambda : Verif(EntreeLien))
     
     Label=tk.Label(grille,text="Configuration",font=(Police,12),fg=couleur3,bg=couleur1)
 
-    espace1=tk.Label(grille,text="      ",font=(Police,12),fg=couleur2,bg=couleur1)
+    espace1=tk.Label(grille,text="                      ",font=(Police,12),fg=couleur2,bg=couleur1)
     espace2=tk.Label(grille,text="                              ",font=(Police,12),fg=couleur2,bg=couleur1)
 
 
     Label1=tk.Label(grille,text="Lien de la playlist :",font=(Police,12),fg=couleur2,bg=couleur1)
     Label2=tk.Label(grille,text="Bluetooth automatique* :",font=(Police,12),fg=couleur2,bg=couleur1)
-    Label3=tk.Label(grille,text="Chemin d'accès aux exos (pdf):",font=(Police,12),fg=couleur2,bg=couleur1)
+    Label3=tk.Label(grille,text=f"'{nom_playlist}'",font=(Police,8),fg=couleur3,bg=couleur1)
     EntreeLien=tk.Entry(grille,width=30)
     EntreeLien.insert(0,lien)
     FloatingTooltip(EntreeLien)
     
     Bluetooth=tk.Button(grille,image=imageBluetooth,fg=couleur2,bg=couleur1, command = lambda : toggle(Bluetooth), width=30, height=30)
 
-    #PathCours=tk.Entry(grille)
-    #PathCours.insert(0,pathCours)
-    #Suppr_l=[]
-    #exosTklEntry=[tk.Entry(grille)]
-    #exosTklEntry[0].insert(0,pathExosL[0])
-    #labelExos=[Label3]
-
-    label4=tk.Label(grille,text="Veuillez renseigner une adresse mail de la forme: prénom.nom@dspace.fr",font=(Police,8),fg=couleur5,bg=couleur1)
-    label5=tk.Label(grille,text="Le chemin renseigné n'est pas valide",font=(Police,8),fg=couleur5,bg=couleur1)
-
-    #interface.bind('<Return>', lambda event: Valider.invoke())
-
+    
     Label.grid(row=0,column=0, columnspan=20,pady=50)
 
     Label1.grid(row=1,column=2,padx=10,pady=5, sticky="e")
     EntreeLien.grid(row=1,column=4,padx=10,pady=5, sticky="w")
-    espace1.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+    Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
 
     espace2.grid(row=2, column=2, padx=10, pady=5, sticky="w")
-    
+    espace1.grid(row=2, column=6, padx=10, pady=5, sticky="w")
+
     Label2.grid(row=3,column=2,padx=10,pady=10, sticky="e")
     Bluetooth.grid(row=3, column=4, padx=10, pady=5, sticky="w")
     
     Valider.grid(row=100,column=6,padx=10,pady=20)
+    interface.bind('<Return>', lambda event: Valider.invoke())
 
     if Bluetooth_init:
         toggle(Bluetooth)
@@ -140,59 +155,43 @@ def page2 (lien):#mode,nom,mail,pathExosL,pathCours):
 
 def Verif (entry):
 
-    lien_entree = entry.get()
+    lien_entre = entry.get()
+    try:
+        key = lien_entre.split("playlist/")[1].split("?")[0] #peut échouer
 
-    texte="Le lien renseigné n'est pas valide"
+        if len(key) != 22 or "open.spotify.com" not in lien_entre:
+            texte="Le lien renseigné n'est pas valide"
 
+        else:
+            texte="                                                       "
 
+            try :
+                nom_playlist=get_playlist_name(lien_entre) #peut échouer
+
+                Label3=tk.Label(grille,text="                      ",font=(Police,8),fg=couleur3,bg=couleur1)
+                Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+                Label3=tk.Label(grille,text=f"'{nom_playlist}'",font=(Police,8),fg=couleur3,bg=couleur1)
+                Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+
+                with open(data_path, 'r') as f:
+                    data = json.load(f)
+
+                data["lien"] = lien_entre
+                data["key"] = key
+                data["nom_playlist"] = nom_playlist
+                    
+                with open(data_path, 'w') as f:
+                    json.dump(data, f, indent=4) 
+            except:
+                texte="Le lien renseigné n'est pas valide"
+    except:
+        texte="Le lien renseigné n'est pas valide"
+
+       
 
     ErrorLabel=tk.Label(grille,text=texte,font=(Police,8),fg=couleur5,bg=couleur1)
-
     ErrorLabel.grid(row=2,column=4,padx=6,pady=5, sticky="e")
 
-    with open(data_path, 'r') as f:
-        data = json.load(f)
-
-    data["lien"] = lien_entree
-        
-    with open(data_path, 'w') as f:
-        json.dump(data, f, indent=4)    
-
-
-
-def Verif1 (tkl,mode,exosTklEntry,exosTklLabel,nom):
-    mail = tkl[0].get()
-    pathCours = os.path.normpath(tkl[1].get().strip().strip('"'))
-    pathExosL= [tk.get().strip().strip('"') for tk in exosTklEntry]
-    
-    print(mail,pathExosL,pathCours,os.path.normpath(exosTklEntry[0].get().strip().strip('"')))
-
-    verif="OK"
-    for tk in exosTklLabel:
-        tk.grid_remove()
-    tkl[8].grid_remove()
-    tkl[9].grid_remove()
-
-
-    if mail[-10::]!="@dspace.fr" and mail[-10::]!="@dspace.de":
-        tkl[8].grid(row=2,column=4,padx=5,pady=5, sticky="w")
-        verif="NOT OK"
-    
-    if pathCours=="." or not(os.path.exists(pathCours)) or est_raccourci_pdf(pathCours):
-        tkl[9].grid(row=4,column=4,padx=5,pady=5, sticky="w")
-        verif="NOT OK"
-    
-    i=0
-    for pathExo in pathExosL :
-        pathExo=os.path.normpath(pathExo)
-        if pathExo=="." or not(os.path.exists(pathExo)) or est_raccourci_pdf(pathExo):
-            exosTklLabel[i].grid(row=6+2*i,column=4,padx=5,pady=5, sticky="w")
-            verif="NOT OK"
-        i+=1
-
-
-    if verif=="OK":
-        page3(tkl+exosTklEntry+exosTklLabel,mode,nom,mail,pathExosL,pathCours)
 
 ###########################################################
 couleur1="#E5F9F1"
@@ -210,7 +209,7 @@ interface.title("BaliSpotify")
 
 # icon=tk.PhotoImage(file="webex+.png")
 # interface.iconphoto(True,icon)
-imageBluetooth=ImageTk.PhotoImage(Image.open("bt_logo.png").resize((37, 37)))
+imageBluetooth=ImageTk.PhotoImage(Image.open("bt_logo.png").resize((25, 25)))
 
 
 
@@ -219,7 +218,7 @@ largeur_ecran = interface.winfo_screenwidth()
 hauteur_ecran = interface.winfo_screenheight()
 
 
-l = 540
+l = 600
 h = 400
 
 x = (largeur_ecran-l)//2
