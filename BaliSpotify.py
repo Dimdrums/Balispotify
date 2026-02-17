@@ -94,7 +94,7 @@ def Wait_for_button(win,timeout,time_pace=4):
 
 ##############################################################
 
-asyncio.run(set_bluetooth(True))
+#asyncio.run(set_bluetooth(True))
 
 url="https://open.spotify.com/playlist/6MFXJRfwrMzpS0AUnbV7tu?si=97a835f88a2c4bd5"
 
