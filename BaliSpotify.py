@@ -1,11 +1,24 @@
 from pywinauto import Application, Desktop
 import os
+import json
 import time
 import psutil
 import subprocess
 import asyncio
 from winrt.windows.devices.radios import Radio, RadioKind, RadioState
 
+################ DATA ###############
+
+appdata_dir = os.getenv('APPDATA')    #les données sont sauvegardées dans le appdata
+data_path = os.path.join(appdata_dir, 'BaliSpotify', 'data.json')
+
+with open(data_path, 'r') as f:
+        data = json.load(f)
+
+key = data["key"]
+Bluetooth = data["Bluetooth"]
+
+#####################################
 
 async def set_bluetooth(enabled: bool): # ChatGPT : Ok
 
@@ -71,12 +84,19 @@ def Wait_for_button(win,timeout,time_pace=4):
         time.sleep(dt)
         
         buttons = win.descendants(control_type="Button")
-        #print(buttons)
+        print(buttons)
         for btn in buttons:
             try:
-                if "– Modifier les informations" in btn.element_info.name:
-                    playlistTitle = btn.element_info.name[:-27]
-                    print(f"Playlist trouvée en {round(time.time() - start,2)}s : '{playlistTitle.strip()}'")
+                if "Plus d'options pour " in btn.element_info.name:  #"– Modifier les informations"  <-- ne fonctionne pas avec des playlists Spotify
+                    playlistTitle = btn.element_info.name[20:].strip()  #[:-27]
+                    print(f"Playlist trouvée en {round(time.time() - start,2)}s : '{playlistTitle}'")
+                    #update nom_playlist:
+                    with open(data_path, 'r') as f:
+                            data = json.load(f)
+                    data["nom_playlist"] = playlistTitle
+                    with open(data_path, 'w') as f:
+                        json.dump(data, f, indent=4) 
+                    #####################
                     start=time.time()
                     for btnPlay in buttons:
                         if  ("Lire" in btnPlay.element_info.name) and (playlistTitle.strip() in btnPlay.element_info.name) :
@@ -94,16 +114,14 @@ def Wait_for_button(win,timeout,time_pace=4):
 
 ##############################################################
 
-#asyncio.run(set_bluetooth(True))
+if Bluetooth:
+    asyncio.run(set_bluetooth(True))
 
-url="https://open.spotify.com/playlist/6MFXJRfwrMzpS0AUnbV7tu?si=97a835f88a2c4bd5"
+print(key)
 
-# playlist_key=url.split("playlist/")[1].split("?")[0]
-# #print(playlist_key)
+window,_=openSpotify_wait(key,10)
 
-# window,_=openSpotify_wait(playlist_key,10)
-
-# play_button=Wait_for_button(window,5)
-# #play_button.click_input()
+play_button=Wait_for_button(window,5)
+#play_button.click_input()
 
 

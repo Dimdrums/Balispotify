@@ -122,11 +122,18 @@ def page2 (lien):#mode,nom,mail,pathExosL,pathCours):
 
     espace1=tk.Label(grille,text="                      ",font=(Police,12),fg=couleur2,bg=couleur1)
     espace2=tk.Label(grille,text="                              ",font=(Police,12),fg=couleur2,bg=couleur1)
+    espace3=tk.Label(grille,text="                                                         ",font=(Police,8),fg=couleur2,bg=couleur1)
 
+    if nom_playlist == "clic droit > Partager > Copier le lien...":
+        texte = nom_playlist
+        color = couleur2
+    else:
+        texte = f"'{nom_playlist}'"
+        color = couleur3
 
     Label1=tk.Label(grille,text="Lien de la playlist :",font=(Police,12),fg=couleur2,bg=couleur1)
     Label2=tk.Label(grille,text="Bluetooth automatique* :",font=(Police,12),fg=couleur2,bg=couleur1)
-    Label3=tk.Label(grille,text=f"'{nom_playlist}'",font=(Police,8),fg=couleur3,bg=couleur1)
+    Label3=tk.Label(grille,text=texte,font=(Police,8),fg=color,bg=couleur1)
     EntreeLien=tk.Entry(grille,width=30)
     EntreeLien.insert(0,lien)
     FloatingTooltip(EntreeLien)
@@ -138,13 +145,14 @@ def page2 (lien):#mode,nom,mail,pathExosL,pathCours):
 
     Label1.grid(row=1,column=2,padx=10,pady=5, sticky="e")
     EntreeLien.grid(row=1,column=4,padx=10,pady=5, sticky="w")
-    Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+    Label3.grid(row=1, column=6, padx=10, pady=5)
 
     espace2.grid(row=2, column=2, padx=10, pady=5, sticky="w")
     espace1.grid(row=2, column=6, padx=10, pady=5, sticky="w")
 
     Label2.grid(row=3,column=2,padx=10,pady=10, sticky="e")
     Bluetooth.grid(row=3, column=4, padx=10, pady=5, sticky="w")
+    espace3.grid(row=3, column=6, padx=10, pady=5, sticky="w")
     
     Valider.grid(row=100,column=6,padx=10,pady=20)
     interface.bind('<Return>', lambda event: Valider.invoke())
@@ -154,6 +162,10 @@ def page2 (lien):#mode,nom,mail,pathExosL,pathCours):
 
 
 def Verif (entry):
+
+    Label1=tk.Label(grille,text="🛜",font=(Police,12),fg=couleur2,bg=couleur1)
+    Label1.grid(row=100,column=4,pady=20, sticky="e")
+    interface.update()
 
     lien_entre = entry.get()
     try:
@@ -168,10 +180,16 @@ def Verif (entry):
             try :
                 nom_playlist=get_playlist_name(lien_entre) #peut échouer
 
-                Label3=tk.Label(grille,text="                      ",font=(Police,8),fg=couleur3,bg=couleur1)
+                if nom_playlist=="Spotify" or nom_playlist=="Page not available":
+                    nom_playlist="OK 👍"
+                else:
+                    nom_playlist=f"'{nom_playlist}'"
+
+                Label3=tk.Label(grille,text="                                                         ",font=(Police,8),fg=couleur3,bg=couleur1)
                 Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
-                Label3=tk.Label(grille,text=f"'{nom_playlist}'",font=(Police,8),fg=couleur3,bg=couleur1)
-                Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+                interface.update()
+                Label3=tk.Label(grille,text=nom_playlist,font=(Police,8),fg=couleur3,bg=couleur1)
+                Label3.grid(row=1, column=6, padx=10, pady=5)
 
                 with open(data_path, 'r') as f:
                     data = json.load(f)
@@ -191,6 +209,10 @@ def Verif (entry):
 
     ErrorLabel=tk.Label(grille,text=texte,font=(Police,8),fg=couleur5,bg=couleur1)
     ErrorLabel.grid(row=2,column=4,padx=6,pady=5, sticky="e")
+
+    Label1=tk.Label(grille,text="     ",font=(Police,12),fg=couleur2,bg=couleur1)
+    Label1.grid(row=100,column=4,pady=20, sticky="e")
+    interface.update()
 
 
 ###########################################################
