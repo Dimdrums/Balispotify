@@ -17,6 +17,7 @@ with open(data_path, 'r') as f:
 
 lienSpotify = data["lien"]
 Bluetooth_init = data["Bluetooth"]
+mode = data[":>"]
 
 #####################################
 
@@ -168,44 +169,55 @@ def Verif (entry):
     interface.update()
 
     lien_entre = entry.get()
-    try:
-        key = lien_entre.split("playlist/")[1].split("?")[0] #peut échouer
+    if lien_entre == ":>":
+        texte="                          Relancez l'application"
 
-        if len(key) != 22 or "open.spotify.com" not in lien_entre:
+        with open(data_path, 'r') as f:
+            data = json.load(f)
+
+        data[":>"] = not(data[":>"])
+            
+        with open(data_path, 'w') as f:
+            json.dump(data, f, indent=4)
+    else:
+        try:
+            key = lien_entre.split("playlist/")[1].split("?")[0] #peut échouer
+
+            if len(key) != 22 or "open.spotify.com" not in lien_entre:
+                texte="Le lien renseigné n'est pas valide"
+
+            else:
+                texte="                                                       "
+
+                try :
+                    nom_playlist=get_playlist_name(lien_entre) #peut échouer
+
+                    if nom_playlist=="Spotify" or nom_playlist=="Page not available":
+                        nom_playlist="OK 👍"
+                    else:
+                        nom_playlist=f"'{nom_playlist}'"
+
+                    Label3=tk.Label(grille,text="                                                         ",font=(Police,8),fg=couleur3,bg=couleur1)
+                    Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
+                    interface.update()
+                    Label3=tk.Label(grille,text=nom_playlist,font=(Police,8),fg=couleur3,bg=couleur1)
+                    Label3.grid(row=1, column=6, padx=10, pady=5)
+
+                    with open(data_path, 'r') as f:
+                        data = json.load(f)
+
+                    data["lien"] = lien_entre
+                    data["key"] = key
+                    data["nom_playlist"] = nom_playlist
+                        
+                    with open(data_path, 'w') as f:
+                        json.dump(data, f, indent=4) 
+                except:
+                    texte="Le lien renseigné n'est pas valide"
+        except:
             texte="Le lien renseigné n'est pas valide"
 
-        else:
-            texte="                                                       "
-
-            try :
-                nom_playlist=get_playlist_name(lien_entre) #peut échouer
-
-                if nom_playlist=="Spotify" or nom_playlist=="Page not available":
-                    nom_playlist="OK 👍"
-                else:
-                    nom_playlist=f"'{nom_playlist}'"
-
-                Label3=tk.Label(grille,text="                                                         ",font=(Police,8),fg=couleur3,bg=couleur1)
-                Label3.grid(row=1, column=6, padx=10, pady=5, sticky="w")
-                interface.update()
-                Label3=tk.Label(grille,text=nom_playlist,font=(Police,8),fg=couleur3,bg=couleur1)
-                Label3.grid(row=1, column=6, padx=10, pady=5)
-
-                with open(data_path, 'r') as f:
-                    data = json.load(f)
-
-                data["lien"] = lien_entre
-                data["key"] = key
-                data["nom_playlist"] = nom_playlist
-                    
-                with open(data_path, 'w') as f:
-                    json.dump(data, f, indent=4) 
-            except:
-                texte="Le lien renseigné n'est pas valide"
-    except:
-        texte="Le lien renseigné n'est pas valide"
-
-       
+        
 
     ErrorLabel=tk.Label(grille,text=texte,font=(Police,8),fg=couleur5,bg=couleur1)
     ErrorLabel.grid(row=2,column=4,padx=6,pady=5, sticky="e")
@@ -216,10 +228,20 @@ def Verif (entry):
 
 
 ###########################################################
-couleur1="#E5F9F1"
-couleur2="#009465"
-couleur3="#30bf7c"
-couleur4="#133127"
+
+if mode :
+    couleur1= data["colors"]["1"] # "#F2E5F9"
+    couleur2= data["colors"]["2"] # "#6F0094"
+    couleur3= data["colors"]["3"] # "#b122dd"
+    couleur4= data["colors"]["4"] # "#3E2047"
+
+else:
+
+    couleur1="#E5F9F1"
+    couleur2="#009465"
+    couleur3="#30bf7c"
+    couleur4="#133127"
+
 couleur5="#933535"
 Police="Open Sans"
 
