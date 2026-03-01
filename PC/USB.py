@@ -7,4 +7,10 @@ print("OK")
 
 while True:
     line = ser.readline().decode().strip()
-    print("Reçu:", line)
+    print("--Reçu:", line)
+    if line == "on" or line == "off":
+        print("reçu!")
+        if line == "on":
+            print("go script")
+    else:
+        print("no signal")
